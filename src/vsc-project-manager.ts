@@ -50,11 +50,17 @@ export class VscProjectManager extends Disposable {
 		if (!/[\\/]node_modules[\\/]/i.test(configFilename)) {
 			void this.#queue(async () => {
 				this.#output.log(`Loading project: ${configFilename}`);
-
 				const cwd = dirname(configFilename);
-				const core = await loadExternalModule<U27NCore>(cwd, "@u27n/core");
-				const config = await core.Config.read(configFilename);
 
+				let core: U27NCore;
+				try {
+					core = await loadExternalModule<U27NCore>(cwd, "@u27n/core");
+				} catch {
+					this.#output.log(`Project was not loaded because the u27n core module is not installed locally: ${configFilename}`);
+					return;
+				}
+
+				const config = await core.Config.read(configFilename);
 				const project = await VscProject.load({
 					output: this.#output,
 					configFilename,
