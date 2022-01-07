@@ -8,13 +8,13 @@
 	"license": "MIT",
 	"version": "0.0.1",
 	"engines": {
-		"vscode": "^1.22.0"
+		"vscode": "^1.63.1"
 	},
 	"categories": [
 		"Other"
 	],
 	"activationEvents": [
-		"*"
+		"onStartupFinished"
 	],
 	"main": "./out/index.js",
 	"contributes": {
@@ -31,7 +31,10 @@
 		"build:extension": "tsc -p tsconfig-extension.json",
 		"watch": "npm run build && concurrently npm:watch:*",
 		"watch:extension": "tsc -p tsconfig-extension.json -w",
-		"lint": "eslint --no-error-on-unmatched-pattern --config .eslintrc.json ./src/**/*"
+		"lint": "eslint --no-error-on-unmatched-pattern --config .eslintrc.json ./src/**/*",
+		"vscode:prepublish": "npm run build",
+		"package": "vsce package",
+		"publish": "vsce publish"
 	},
 	"devDependencies": {
 		"@mpt/eslint-rules": "^2.0.0",
