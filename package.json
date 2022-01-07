@@ -1,0 +1,52 @@
+{
+	"name": "u27n",
+	"publisher": "mxjp",
+	"private": true,
+	"description": "U27N extension for vscode",
+	"repository": "https://github.com/mxjp/u27n-vscode.git",
+	"author": "Max J. Polster",
+	"license": "MIT",
+	"version": "0.0.1",
+	"engines": {
+		"vscode": "^1.22.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"*"
+	],
+	"main": "./out/index.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "u27n-edit-fragment",
+				"title": "Edit translation"
+			}
+		]
+	},
+	"scripts": {
+		"clean": "rimraf ./dist/**/*",
+		"build": "concurrently npm:build:*",
+		"build:extension": "tsc -p tsconfig-extension.json",
+		"watch": "npm run build && concurrently npm:watch:*",
+		"watch:extension": "tsc -p tsconfig-extension.json -w",
+		"lint": "eslint --no-error-on-unmatched-pattern --config .eslintrc.json ./src/**/*"
+	},
+	"devDependencies": {
+		"@mpt/eslint-rules": "^2.0.0",
+		"@mpt/line-map": "^1.0.0",
+		"@types/node": "^17.0.8",
+		"@types/resolve": "^1.20.1",
+		"@types/vscode": "^1.63.1",
+		"@u27n/core": "^1.7.0",
+		"concurrently": "^7.0.0",
+		"rimraf": "^3.0.2",
+		"typescript": "^4.5.4",
+		"vsce": "^2.6.3"
+	},
+	"dependencies": {
+		"p-limit": "^3.1.0",
+		"resolve": "^1.21.0"
+	}
+}
