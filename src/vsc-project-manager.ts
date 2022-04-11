@@ -1,90 +1,91 @@
-import limit from "p-limit";
 import { dirname } from "path";
 import { Disposable, FileSystemWatcher, Uri, workspace } from "vscode";
 
-import { loadExternalModule } from "./external-modules";
-import { Output } from "./output";
-import { U27NCore } from "./u27n";
+import { Output } from "./common/output";
+import { resolveModule } from "./common/resolve-module";
+import { TaskQueue } from "./common/task-queue";
 import { VscProject } from "./vsc-project";
 
-const CONFIG_PATTERN = "**/u27n.json";
+const CORE_MODULE_ID = "@u27n/core";
+const LSP_MODULE_ID = `${CORE_MODULE_ID}/dist/cjs/lsp`;
 
 export class VscProjectManager extends Disposable {
 	readonly #output: Output;
-	readonly #projects: Map<string, VscProject>;
-	readonly #queue: limit.Limit;
+	readonly #configPattern: string;
+
+	readonly #queue = new TaskQueue();
+	readonly #projects = new Map<string, VscProject>();
 	readonly #configWatcher: FileSystemWatcher;
 
 	#disposed = false;
 
-	public constructor(output: Output) {
+	public constructor(options: ProjectManager.Options) {
 		super(() => {
 			this.#disposed = true;
 			this.#configWatcher.dispose();
 		});
 
-		this.#output = output;
-		this.#projects = new Map();
-		this.#queue = limit(1);
+		this.#output = options.output;
+		this.#configPattern = options.configPattern;
 
-		this.#configWatcher = workspace.createFileSystemWatcher(CONFIG_PATTERN);
+		this.#loadProjects().catch(error => this.#output.error(error));
+
+		this.#configWatcher = workspace.createFileSystemWatcher(this.#configPattern);
 		this.#configWatcher.onDidCreate(this.#loadProject, this);
-		this.#configWatcher.onDidChange(uri => {
-			this.#unloadProject(uri);
-			this.#loadProject(uri);
-		});
+		this.#configWatcher.onDidChange(this.#loadProject, this);
 		this.#configWatcher.onDidDelete(this.#unloadProject, this);
-
-		this.#loadInitial().catch(error => output.error(error));
 	}
 
-	async #loadInitial() {
-		const files = await workspace.findFiles(CONFIG_PATTERN);
+	async #loadProjects() {
+		const files = await workspace.findFiles(this.#configPattern, "**/node_modules/**");
 		if (!this.#disposed) {
-			files.forEach(uri => this.#loadProject(uri));
+			files.forEach(configUri => this.#loadProject(configUri));
 		}
 	}
 
-	#loadProject(configUri: Uri): void {
+	#loadProject(configUri: Uri) {
 		const configFilename = configUri.fsPath;
 		if (!/[\\/]node_modules[\\/]/i.test(configFilename)) {
-			void this.#queue(async () => {
-				this.#output.log(`Loading project: ${configFilename}`);
-				const cwd = dirname(configFilename);
-
-				let core: U27NCore;
-				try {
-					core = await loadExternalModule<U27NCore>(cwd, "@u27n/core");
-				} catch {
-					this.#output.log(`Project was not loaded because the u27n core module is not installed locally: ${configFilename}`);
-					return;
-				}
-
-				const config = await core.Config.read(configFilename);
-				const project = await VscProject.load({
-					output: this.#output,
-					configFilename,
-					config,
-					core,
-				});
-				if (this.#disposed) {
-					project.dispose();
+			void this.#queue.run(async () => {
+				const oldProject = this.#projects.get(configFilename);
+				if (oldProject) {
+					this.#output.info("Reloading project:", configFilename);
+					oldProject.dispose();
+					this.#projects.delete(configFilename);
 				} else {
-					this.#projects.set(configFilename, project);
+					this.#output.info("Loading project:", configFilename);
 				}
-			}).catch(this.#output.error);
+
+				const lspModule = await resolveModule(dirname(configFilename), LSP_MODULE_ID);
+				if (lspModule === null) {
+					this.#output.info(`Project is ignored because ${CORE_MODULE_ID} is not installed locally:`, configFilename);
+				} else {
+					this.#projects.set(configFilename, new VscProject({
+						output: this.#output,
+						configFilename,
+						lspModule,
+					}));
+				}
+			});
 		}
 	}
 
-	#unloadProject(configUri: Uri): void {
-		void this.#queue(() => {
+	#unloadProject(configUri: Uri) {
+		void this.#queue.run(() => {
 			const configFilename = configUri.fsPath;
 			const project = this.#projects.get(configFilename);
-			if (project) {
-				this.#output.log(`Unloading project: ${configFilename}`);
+			if (project !== undefined) {
+				this.#output.info("Unloading project:", configFilename);
 				this.#projects.delete(configFilename);
 				project.dispose();
 			}
 		});
+	}
+}
+
+export declare namespace ProjectManager {
+	export interface Options {
+		output: Output;
+		configPattern: string;
 	}
 }

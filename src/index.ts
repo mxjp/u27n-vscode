@@ -1,14 +1,18 @@
-import * as vsc from "vscode";
-
-import { Output } from "./output";
+import { Output } from "./common/output";
 import { VscProjectManager } from "./vsc-project-manager";
 
-export function activate(context: vsc.ExtensionContext): void {
-	const output = new Output();
-	context.subscriptions.push(output);
+let output: Output;
+let projects: VscProjectManager;
 
-	const projectManager = new VscProjectManager(output);
-	context.subscriptions.push(projectManager);
+export async function activate(): Promise<void> {
+	output = new Output();
+	projects = new VscProjectManager({
+		output,
+		configPattern: "**/u27n.json",
+	});
 }
 
-export function deactivate(): void {}
+export async function deactivate(): Promise<void> {
+	output.dispose();
+	projects.dispose();
+}
