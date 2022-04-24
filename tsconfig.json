@@ -6,7 +6,9 @@
 		"rootDir": "src",
 		"outDir": "out",
 		"strict": true,
-		"esModuleInterop": true
+		"esModuleInterop": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "preact"
 	},
 	"include": [
 		"src"

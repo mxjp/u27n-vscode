@@ -1,0 +1,32 @@
+
+.pluralGrid {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	column-gap: var(--col-gap);
+	row-gap: var(--row-gap);
+	align-items: center;
+}
+
+.pluralFormIndex {
+	grid-column: 1 / 2;
+	opacity: .5;
+}
+
+.pluralFormValue {
+	grid-column: 2 / 3;
+}
+
+.textEditor {
+	background-color: var(--vscode-input-background);
+	color: var(--vscode-input-foreground);
+
+	border: none;
+	outline: none;
+
+	font-family: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+	width: 100%;
+
+	padding: .2rem;
+}

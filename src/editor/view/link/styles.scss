@@ -1,0 +1,14 @@
+
+.link {
+	color: var(--vscode-textLink-foreground);
+	cursor: pointer;
+	outline: none;
+
+	&[disabled] {
+		opacity: .5;
+	}
+
+	&:focus {
+		text-decoration: underline;
+	}
+}

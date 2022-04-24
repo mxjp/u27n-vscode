@@ -1,0 +1,25 @@
+
+.grid {
+	grid-template-rows: auto 1fr;
+}
+
+.header {
+	padding: var(--content-padding-v) var(--content-padding-h);
+	display: flex;
+	flex-direction: row;
+	column-gap: var(--content-col-gap);
+	border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.contentArea {
+	flex-grow: 1;
+	position: relative;
+}
+
+.content {
+	position: absolute;
+	top: 0;
+	left: 0;
+	min-height: 100%;
+	width: 100%;
+}

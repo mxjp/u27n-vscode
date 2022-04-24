@@ -1,0 +1,21 @@
+
+:root {
+	--content-padding-h: .8rem;
+	--content-padding-v: .5rem;
+
+	--content-row-gap: 1.2rem;
+	--content-col-gap: 1rem;
+
+	--row-gap: .5rem;
+	--col-gap: .8rem;
+}
+
+body {
+	padding: 0 !important;
+	position: relative;
+	height: 100vh;
+}
+
+* {
+	box-sizing: border-box;
+}
