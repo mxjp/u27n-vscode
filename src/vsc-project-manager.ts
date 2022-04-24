@@ -130,6 +130,8 @@ export class VscProjectManager extends Disposable {
 				if (lspModule === null) {
 					this.#output.info(`Project is ignored because ${CORE_MODULE_ID} is not installed locally:`, configFilename);
 				} else {
+					this.#output.info(`Using core module: ${lspModule}`);
+
 					const id = this.#nextProjectId++;
 					const project = await VscProject.create({
 						id,
