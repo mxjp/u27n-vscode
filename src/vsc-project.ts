@@ -139,12 +139,23 @@ export class VscProject extends Disposable {
 			},
 		);
 
-		const run = client.start();
-		await client.onReady();
+		let run: Disposable | null = null;
+		try {
+			run = client.start();
+			await client.onReady();
 
-		const info: ProjectInfo = await client.sendRequest("u27n/get-project-info");
-
-		return new VscProject(options, client, run, info);
+			const info: ProjectInfo = await client.sendRequest("u27n/get-project-info");
+			return new VscProject(options, client, run, info);
+		} catch (error) {
+			try {
+				run?.dispose();
+				void client.stop();
+				client.outputChannel.dispose();
+				client.traceOutputChannel.dispose();
+			// eslint-disable-next-line no-empty
+			} catch {}
+			throw error;
+		}
 	}
 }
 
