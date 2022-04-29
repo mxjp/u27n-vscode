@@ -30,9 +30,7 @@ export class VscProject extends Disposable {
 		super(() => {
 			this.#disposed = true;
 			run.dispose();
-			void client.stop();
 			client.outputChannel.dispose();
-			client.traceOutputChannel.dispose();
 		});
 
 		this.#id = options.id;
@@ -125,6 +123,7 @@ export class VscProject extends Disposable {
 				transport: lsp.TransportKind.ipc,
 			},
 			{
+				initializationFailedHandler: () => false,
 				documentSelector: [
 					{
 						scheme: "file",
@@ -139,27 +138,30 @@ export class VscProject extends Disposable {
 			},
 		);
 
-		let run: Disposable | null = null;
+		const run = client.start();
 		try {
-			run = client.start();
 			await client.onReady();
-
 			const info: ProjectInfo = await client.sendRequest("u27n/get-project-info");
 			return new VscProject(options, client, run, info);
 		} catch (error) {
-			try {
-				run?.dispose();
-				void client.stop();
+			throw new VscProject.InitError(error, new Disposable(() => {
+				run.dispose();
 				client.outputChannel.dispose();
-				client.traceOutputChannel.dispose();
-			// eslint-disable-next-line no-empty
-			} catch {}
-			throw error;
+			}));
 		}
 	}
 }
 
-export declare namespace VscProject {
+export namespace VscProject {
+	export class InitError extends Error {
+		public constructor(
+			public readonly error: unknown,
+			public readonly disposable: Disposable,
+		) {
+			super();
+		}
+	}
+
 	export interface Options {
 		id: number;
 		output: Output;

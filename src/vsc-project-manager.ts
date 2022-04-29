@@ -21,6 +21,7 @@ export class VscProjectManager extends Disposable {
 	readonly #queue = new TaskQueue();
 	readonly #projects = new Map<string, VscProject>();
 	readonly #projectsById = new Map<number, VscProject>();
+	readonly #erroredProjects = new Map<string, Disposable>();
 
 	readonly #configWatcher: FileSystemWatcher;
 	readonly #savePendingChangeBackups = rateLimit(300, this.#savePendingChangeBackupsImmediate.bind(this));
@@ -41,6 +42,9 @@ export class VscProjectManager extends Disposable {
 		super(() => {
 			this.#disposed = true;
 			this.#configWatcher.dispose();
+
+			this.#erroredProjects.forEach(d => void d.dispose());
+			this.#erroredProjects.clear();
 		});
 
 		this.#output = options.output;
@@ -115,6 +119,8 @@ export class VscProjectManager extends Disposable {
 		const configFilename = configUri.fsPath;
 		if (!/[\\/]node_modules[\\/]/i.test(configFilename)) {
 			void this.#queue.run(async () => {
+				this.#cleanupErroredProject(configFilename);
+
 				const oldProject = this.#projects.get(configFilename);
 				if (oldProject) {
 					this.#output.info("Reloading project:", configFilename);
@@ -132,26 +138,35 @@ export class VscProjectManager extends Disposable {
 				} else {
 					this.#output.info(`Using core module: ${lspModule}`);
 
-					const id = this.#nextProjectId++;
-					const project = await VscProject.create({
-						id,
-						output: this.#output,
-						configFilename,
-						lspModule,
-						pendingChanges,
-					});
+					try {
+						const id = this.#nextProjectId++;
+						const project = await VscProject.create({
+							id,
+							output: this.#output,
+							configFilename,
+							lspModule,
+							pendingChanges,
+						});
 
-					project.onProjectUpdate(() => {
-						this.#onProjectUpdate.fire(project);
-					});
+						project.onProjectUpdate(() => {
+							this.#onProjectUpdate.fire(project);
+						});
 
-					project.onBackupPendingChanges(() => {
-						this.#savePendingChangeBackups();
-					});
+						project.onBackupPendingChanges(() => {
+							this.#savePendingChangeBackups();
+						});
 
-					this.#projects.set(configFilename, project);
-					this.#projectsById.set(id, project);
-					this.#onProjectLoad.fire(project);
+						this.#projects.set(configFilename, project);
+						this.#projectsById.set(id, project);
+						this.#onProjectLoad.fire(project);
+					} catch (error) {
+						if (error instanceof VscProject.InitError) {
+							this.#erroredProjects.set(configFilename, error.disposable);
+							this.#output.info("Failed to load project:", configFilename, error.error);
+						} else {
+							throw error;
+						}
+					}
 				}
 			});
 		}
@@ -160,6 +175,7 @@ export class VscProjectManager extends Disposable {
 	#unloadProject(configUri: Uri) {
 		void this.#queue.run(() => {
 			const configFilename = configUri.fsPath;
+			this.#cleanupErroredProject(configFilename);
 			const project = this.#projects.get(configFilename);
 			if (project !== undefined) {
 				this.#output.info("Unloading project:", configFilename);
@@ -169,6 +185,14 @@ export class VscProjectManager extends Disposable {
 				this.#onProjectUnload.fire(project);
 			}
 		});
+	}
+
+	#cleanupErroredProject(configFilename: string) {
+		const disposable = this.#erroredProjects.get(configFilename);
+		if (disposable) {
+			this.#erroredProjects.delete(configFilename);
+			disposable.dispose();
+		}
 	}
 
 	#savePendingChangeBackupsImmediate() {
