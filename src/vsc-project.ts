@@ -1,13 +1,14 @@
 import type { DataProcessor, TranslationData } from "@u27n/core";
 import type { Options, ProjectInfo, SetTranslationRequest } from "@u27n/core/dist/es/language-server/types";
 import { basename, dirname, relative } from "path";
-import { Disposable, EventEmitter } from "vscode";
+import { Disposable, EventEmitter, Uri } from "vscode";
 import * as lsp from "vscode-languageclient/node";
 
 import { Output } from "./common/output";
 
 export class VscProject extends Disposable {
 	readonly #id: number;
+	readonly #configUri: Uri;
 	readonly #configFilename: string;
 	readonly #context: string;
 	readonly #client: lsp.LanguageClient;
@@ -34,6 +35,7 @@ export class VscProject extends Disposable {
 		});
 
 		this.#id = options.id;
+		this.#configUri = options.configUri;
 		this.#configFilename = options.configFilename;
 		this.#context = dirname(options.configFilename);
 		this.#client = client;
@@ -49,6 +51,10 @@ export class VscProject extends Disposable {
 			this.#pendingChangesBackup = pendingChanges;
 			this.#onBackupPendingChanges.fire(pendingChanges);
 		});
+	}
+
+	public get configUri(): Uri {
+		return this.#configUri;
 	}
 
 	public get configFilename(): string {
@@ -165,6 +171,7 @@ export namespace VscProject {
 	export interface Options {
 		id: number;
 		output: Output;
+		configUri: Uri;
 		configFilename: string;
 		lspModule: string;
 		pendingChanges?: DataProcessor.PendingChanges;
