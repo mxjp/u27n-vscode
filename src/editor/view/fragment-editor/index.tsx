@@ -1,9 +1,11 @@
 import type { TranslationData } from "@u27n/core";
 import type { ProjectInfo } from "@u27n/core/dist/es/language-server/types";
-import { RenderableProps, VNode } from "preact";
+import { createRef, RenderableProps, VNode } from "preact";
 
 import type { VscProject } from "../../../vsc-project";
 import { $c } from "../common/attributes";
+import { useOnChange } from "../common/hooks";
+import { scrollIntoView } from "../common/scroll";
 import { TranslationValue } from "../translation-value";
 import { TranslationValueEditor } from "../translation-value/editor";
 import styles from "./styles.scss";
@@ -15,12 +17,24 @@ export function FragmentEditor(props: RenderableProps<{
 	onChange: (locale: string, value: TranslationData.Value) => void;
 }>): VNode {
 	const edited = props.fragment.editedLocales.length > 0;
+	const ref = createRef<HTMLDivElement>();
+
+	useOnChange(props.isSelected, () => {
+		if (props.isSelected) {
+			queueMicrotask(() => {
+				if (ref.current) {
+					scrollIntoView(ref.current);
+				}
+			});
+		}
+	});
+
 	return <>
 		<div class={$c(
 			styles.id,
 			edited ? styles.edited : undefined,
 			props.isSelected ? styles.selected : undefined,
-		)}>
+		)} ref={ref}>
 			#{props.fragment.fragmentId}
 		</div>
 		<div class={$c(

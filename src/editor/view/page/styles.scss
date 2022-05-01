@@ -1,6 +1,8 @@
 
 .grid {
+	display: grid;
 	grid-template-rows: auto 1fr;
+	min-height: 100vh;
 }
 
 .header {
@@ -14,6 +16,7 @@
 .contentArea {
 	flex-grow: 1;
 	position: relative;
+	overflow: auto;
 }
 
 .content {
