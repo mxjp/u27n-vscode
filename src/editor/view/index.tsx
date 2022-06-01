@@ -53,13 +53,14 @@ class Editor extends Component<{}, {
 				</Hint>}
 
 				<FragmentEditorGrid>
-					{fragments.map(fragment => {
+					{fragments.map((fragment, index) => {
 						const project = projects.get(fragment.projectId);
 						if (project === undefined || fragment.fragmentId === undefined) {
 							return <></>;
 						}
 
 						return <FragmentEditor
+							key={`${index},${fragment.fragmentId}`}
 							project={project}
 							fragment={fragment}
 							isSelected={isSelected(fragment, selectionRanges)}
