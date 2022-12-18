@@ -1,0 +1,36 @@
+
+.textEditor {
+	background-color: var(--vscode-input-background);
+	color: var(--vscode-input-foreground);
+
+	border: none;
+	outline: none;
+
+	font-family: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+	width: 100%;
+
+	padding: .2rem;
+
+	resize: none;
+	box-sizing: border-box;
+}
+
+.layoutContainer {
+	position: absolute;
+	overflow: hidden;
+	top: 0px;
+	left: 0px;
+	pointer-events: none;
+	width: 0px;
+	height: 0px;
+}
+
+.layout {
+	box-sizing: border-box;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	white-space: pre-wrap;
+}

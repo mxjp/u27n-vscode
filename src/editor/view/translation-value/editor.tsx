@@ -1,29 +1,10 @@
 import type { TranslationData } from "@u27n/core";
 import type { LocaleInfo } from "@u27n/core/dist/es/language-server/types";
 import { RenderableProps, VNode } from "preact";
-import { useState } from "preact/hooks";
 
 import { Hint } from "../hint";
+import { TextEditor } from "../text-editor";
 import styles from "./styles.scss";
-
-function TextEditor(props: RenderableProps<{
-	value: string;
-	onChange: (value: string) => void;
-}>): VNode {
-	const [value, setValue] = useState(props.value);
-	return <textarea
-		class={styles.textEditor}
-		type="text"
-		value={value}
-		rows={1}
-		onInput={event => {
-			event.stopPropagation();
-			const newValue = (event.target as HTMLInputElement).value;
-			setValue(newValue);
-			props.onChange(newValue);
-		}}
-	/>;
-}
 
 export function TranslationValueEditor(props: RenderableProps<{
 	sourceValue: TranslationData.Value;

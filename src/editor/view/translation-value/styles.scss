@@ -15,18 +15,3 @@
 .pluralFormValue {
 	grid-column: 2 / 3;
 }
-
-.textEditor {
-	background-color: var(--vscode-input-background);
-	color: var(--vscode-input-foreground);
-
-	border: none;
-	outline: none;
-
-	font-family: inherit;
-	font-size: inherit;
-	font-weight: inherit;
-	width: 100%;
-
-	padding: .2rem;
-}
