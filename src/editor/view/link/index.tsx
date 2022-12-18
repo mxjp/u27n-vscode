@@ -12,8 +12,10 @@ export function Link(props: RenderableProps<{
 		role="button"
 		disabled={props.disabled}
 		onClick={event => {
-			event.stopPropagation();
-			props.action();
+			if (!props.disabled) {
+				event.stopPropagation();
+				props.action();
+			}
 		}}
 	>
 		{props.children}

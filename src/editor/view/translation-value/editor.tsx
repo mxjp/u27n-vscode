@@ -11,10 +11,11 @@ function TextEditor(props: RenderableProps<{
 	onChange: (value: string) => void;
 }>): VNode {
 	const [value, setValue] = useState(props.value);
-	return <input
+	return <textarea
 		class={styles.textEditor}
 		type="text"
 		value={value}
+		rows={1}
 		onInput={event => {
 			event.stopPropagation();
 			const newValue = (event.target as HTMLInputElement).value;

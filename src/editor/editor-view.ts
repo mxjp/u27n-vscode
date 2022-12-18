@@ -58,6 +58,7 @@ export class EditorView extends Disposable {
 				case "ready": {
 					this.#updateFragments();
 					this.#updateSelection();
+					this.#updateEditStatus();
 					options.editor.projects.forEach(project => {
 						this.#updateProjectInfo(project);
 					});
@@ -156,6 +157,13 @@ export class EditorView extends Disposable {
 				}),
 			});
 		}
+	}
+
+	#updateEditStatus() {
+		this.#postMessage({
+			type: "edit-status",
+			edited: this.#editor.edited,
+		});
 	}
 
 	public reveal(): void {
