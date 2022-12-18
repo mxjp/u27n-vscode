@@ -1,4 +1,5 @@
 import type { DataProcessor } from "@u27n/core";
+import type { ProjectUpdateInfo } from "@u27n/core/dist/es/language-server/types";
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { dirname, join } from "path";
 import { Disposable, EventEmitter, ExtensionContext, FileSystemWatcher, Uri, workspace } from "vscode";
@@ -12,6 +13,11 @@ import { VscProject } from "./vsc-project";
 
 const CORE_MODULE_ID = "@u27n/core";
 const LSP_MODULE_ID = `${CORE_MODULE_ID}/dist/cjs/language-server`;
+
+export interface VscProjectUpdate {
+	project: VscProject;
+	info: ProjectUpdateInfo;
+}
 
 export class VscProjectManager extends Disposable {
 	readonly #output: Output;
@@ -33,7 +39,7 @@ export class VscProjectManager extends Disposable {
 	readonly #onProjectUnload = new EventEmitter<VscProject>();
 	public readonly onProjectUnload = this.#onProjectUnload.event;
 
-	readonly #onProjectUpdate = new EventEmitter<VscProject>();
+	readonly #onProjectUpdate = new EventEmitter<VscProjectUpdate>();
 	public readonly onProjectUpdate = this.#onProjectUpdate.event;
 
 	#disposed = false;
@@ -172,8 +178,8 @@ export class VscProjectManager extends Disposable {
 							pendingChanges,
 						});
 
-						project.onProjectUpdate(() => {
-							this.#onProjectUpdate.fire(project);
+						project.onProjectUpdate(info => {
+							this.#onProjectUpdate.fire({ project, info });
 						});
 
 						project.onBackupPendingChanges(() => {

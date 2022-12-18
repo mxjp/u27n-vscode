@@ -22,7 +22,7 @@ export class Editor extends Disposable {
 
 	readonly #editedProjects = new Set<VscProject>();
 
-	readonly #onUpdateFragments = new EventEmitter<void>();
+	readonly #onUpdateFragments = new EventEmitter<boolean>();
 	public readonly onUpdateFragments = this.#onUpdateFragments.event;
 
 	readonly #onEditStatusUpdate = new EventEmitter<boolean>();
@@ -52,12 +52,12 @@ export class Editor extends Disposable {
 				this.#updateCurrentFilename();
 			}),
 
-			options.projects.onProjectUpdate(project => {
-				this.#updateSource(project);
+			options.projects.onProjectUpdate(({ project, info }) => {
+				this.#updateSource(project, info.cause !== "diagnostics");
 			}),
 
 			options.projects.onProjectLoad(project => {
-				this.#updateSource(project);
+				this.#updateSource(project, false);
 				if (project.edited) {
 					this.#updateEdited(s => s.add(project));
 				}
@@ -68,7 +68,7 @@ export class Editor extends Disposable {
 
 			options.projects.onProjectUnload(project => {
 				this.#currentFragments.delete(project);
-				this.#onUpdateFragments.fire();
+				this.#onUpdateFragments.fire(false);
 				this.#updateEdited(s => s.delete(project));
 			}),
 		];
@@ -92,7 +92,7 @@ export class Editor extends Disposable {
 		const project = this.projects.get(projectId);
 		if (project) {
 			await project.setTranslation(fragmentId, locale, value);
-			this.#updateSource(project);
+			this.#updateSource(project, false);
 		}
 	}
 
@@ -121,7 +121,7 @@ export class Editor extends Disposable {
 		}
 	}
 
-	#updateSource(project: VscProject): void {
+	#updateSource(project: VscProject, external: boolean): void {
 		const filename = this.#currentFilename;
 		if (filename !== null && project.mayInclude(filename)) {
 			void this.#updateQueue.run(async () => {
@@ -133,7 +133,7 @@ export class Editor extends Disposable {
 						this.#currentFragments.delete(project);
 					}
 				}
-				this.#onUpdateFragments.fire();
+				this.#onUpdateFragments.fire(external);
 			});
 		}
 	}
@@ -160,7 +160,7 @@ export class Editor extends Disposable {
 					}
 				});
 				await finished(tasks);
-				this.#onUpdateFragments.fire();
+				this.#onUpdateFragments.fire(false);
 			}
 		});
 	}

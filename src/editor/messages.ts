@@ -6,6 +6,7 @@ import type { VscProject } from "../vsc-project";
 
 export interface SetFragmentsMessage {
 	readonly type: "set-fragments";
+	readonly external: boolean;
 	readonly fragments: VscProject.Fragment[];
 }
 
@@ -41,6 +42,10 @@ export interface SaveChangesMessage {
 	readonly type: "save-changes";
 }
 
+export interface DiscardChangesMessage {
+	readonly type: "discard-changes";
+}
+
 export interface SelectionRange {
 	start: Position;
 	end: Position;
@@ -51,4 +56,4 @@ export interface SetSelectionMessage {
 	readonly ranges: SelectionRange[];
 }
 
-export type Message = SetFragmentsMessage | SetProjectInfoMessage | DeleteProjectInfoMessage | ReadyMessage | ChangeValueMessage | EditStatusMessage | SaveChangesMessage | SetSelectionMessage;
+export type Message = SetFragmentsMessage | SetProjectInfoMessage | DeleteProjectInfoMessage | ReadyMessage | ChangeValueMessage | EditStatusMessage | SaveChangesMessage | DiscardChangesMessage | SetSelectionMessage;

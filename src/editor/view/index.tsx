@@ -17,6 +17,7 @@ class Editor extends Component<{}, {
 	fragments: VscProject.Fragment[];
 	selectionRanges: SelectionRange[];
 	edited: boolean;
+	externalStateKey: number;
 }> {
 	public constructor() {
 		super();
@@ -25,6 +26,7 @@ class Editor extends Component<{}, {
 			fragments: [],
 			selectionRanges: [],
 			edited: false,
+			externalStateKey: 0,
 		};
 	}
 
@@ -38,13 +40,16 @@ class Editor extends Component<{}, {
 	}
 
 	public render() {
-		const { projects, fragments, selectionRanges, edited } = this.state;
+		const { projects, fragments, selectionRanges, edited, externalStateKey } = this.state;
 
 		return <Page
 			header={<>
 				<Link disabled={!edited} action={() => {
 					vsc.postMessage({ type: "save-changes" });
 				}}>Save Changes</Link>
+				<Link disabled={!edited} action={() => {
+					vsc.postMessage({ type: "discard-changes" });
+				}}>Discard Changes</Link>
 			</>}
 
 			content={<>
@@ -60,7 +65,7 @@ class Editor extends Component<{}, {
 						}
 
 						return <FragmentEditor
-							key={`${index},${fragment.fragmentId}`}
+							key={`${externalStateKey},${index},${fragment.fragmentId}`}
 							project={project}
 							fragment={fragment}
 							isSelected={isSelected(fragment, selectionRanges)}
@@ -86,6 +91,7 @@ class Editor extends Component<{}, {
 			case "set-fragments": {
 				this.setState({
 					fragments: msg.fragments as VscProject.Fragment[],
+					externalStateKey: this.state.externalStateKey + (msg.external ? 1 : 0),
 				});
 			} break;
 

@@ -1,5 +1,5 @@
 import type { DataProcessor, TranslationData } from "@u27n/core";
-import type { Options, ProjectInfo, SetTranslationRequest } from "@u27n/core/dist/es/language-server/types";
+import type { Options, ProjectInfo, ProjectUpdateInfo, SetTranslationRequest } from "@u27n/core/dist/es/language-server/types";
 import { basename, dirname, relative } from "path";
 import { Disposable, EventEmitter, Uri } from "vscode";
 import * as lsp from "vscode-languageclient/node";
@@ -14,7 +14,7 @@ export class VscProject extends Disposable {
 	readonly #client: lsp.LanguageClient;
 	readonly #info: ProjectInfo;
 
-	readonly #onProjectUpdate = new EventEmitter<void>();
+	readonly #onProjectUpdate = new EventEmitter<ProjectUpdateInfo>();
 	public readonly onProjectUpdate = this.#onProjectUpdate.event;
 
 	readonly #onEditStatusUpdate = new EventEmitter<boolean>();
@@ -43,8 +43,8 @@ export class VscProject extends Disposable {
 
 		this.#edited = hasKeys(options.pendingChanges?.translations);
 
-		client.onNotification("u27n/project-update", () => {
-			this.#onProjectUpdate.fire();
+		client.onNotification("u27n/project-update", (info: ProjectUpdateInfo) => {
+			this.#onProjectUpdate.fire(info);
 		});
 
 		client.onNotification("u27n/backup-pending-changes", (pendingChanges: DataProcessor.PendingChanges) => {

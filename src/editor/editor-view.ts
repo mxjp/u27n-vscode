@@ -56,7 +56,7 @@ export class EditorView extends Disposable {
 		view.onDidReceiveMessage((msg: Message) => {
 			switch (msg.type) {
 				case "ready": {
-					this.#updateFragments();
+					this.#updateFragments(false);
 					this.#updateSelection();
 					this.#updateEditStatus();
 					options.editor.projects.forEach(project => {
@@ -72,6 +72,10 @@ export class EditorView extends Disposable {
 					void options.editor.projects.saveChanges();
 				} break;
 
+				case "discard-changes": {
+					void options.editor.projects.discardChanges();
+				} break;
+
 				default: throw new Error(`unknown message: ${msg.type}`);
 			}
 		});
@@ -85,8 +89,8 @@ export class EditorView extends Disposable {
 
 		this.#editor = options.editor;
 		this.#subscriptions = [
-			options.editor.onUpdateFragments(() => {
-				this.#updateFragments();
+			options.editor.onUpdateFragments(external => {
+				this.#updateFragments(external);
 			}),
 
 			options.editor.projects.onProjectLoad(project => {
@@ -123,10 +127,11 @@ export class EditorView extends Disposable {
 		});
 	}
 
-	#updateFragments() {
+	#updateFragments(external: boolean) {
 		this.#postMessage({
 			type: "set-fragments",
 			fragments: this.#editor.getFragments(),
+			external,
 		});
 	}
 
